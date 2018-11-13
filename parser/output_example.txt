@@ -1,0 +1,205 @@
+0 [2:input]
+1 [8:(]
+2 [0:Enter A:]
+3 [26:,]
+4 [2:A]
+5 [9:)]
+6 [25:;]
+7 [2:input]
+8 [8:(]
+9 [0:Enter B:]
+10 [26:,]
+11 [2:B]
+12 [9:)]
+13 [25:;]
+14 [5:while]
+15 [8:(]
+16 [8:(]
+17 [2:A]
+18 [18:>]
+19 [1:0]
+20 [9:)]
+21 [22:&&]
+22 [8:(]
+23 [2:B]
+24 [18:>]
+25 [1:0]
+26 [9:)]
+27 [9:)]
+28 [6:{]
+29 [3:if]
+30 [8:(]
+31 [2:A]
+32 [18:>]
+33 [2:B]
+34 [9:)]
+35 [2:A]
+36 [24:=]
+37 [2:A]
+38 [14:%]
+39 [2:B]
+40 [25:;]
+41 [4:else]
+42 [2:B]
+43 [24:=]
+44 [2:B]
+45 [14:%]
+46 [2:A]
+47 [25:;]
+48 [7:}]
+49 [2:GCD]
+50 [24:=]
+51 [2:A]
+52 [10:+]
+53 [2:B]
+54 [25:;]
+55 [2:print]
+56 [8:(]
+57 [0:GCD(]
+58 [26:,]
+59 [2:A]
+60 [26:,]
+61 [0:, ]
+62 [26:,]
+63 [2:B]
+64 [26:,]
+65 [0:) = ]
+66 [26:,]
+67 [2:GCD]
+68 [9:)]
+69 [25:;]
+[[[[ID
+2
+2
+[[[[ID
+2
+2
+[[[[while
+8
+8
+2
+18
+1
+9
+22
+8
+2
+18
+1
+9
+[[[[if
+2
+2
+18
+2
+[[[[ID
+2
+2
+14
+2
+25
+[[[[ID
+2
+2
+14
+2
+25
+[[[[ID
+2
+2
+10
+2
+25
+[[[[ID
+2
+2
+26
+2
+2
+26
+2
+2
+BLOCK
+    FUNC_CALL input
+        STRING Enter A:
+        ID A
+    FUNC_CALL input
+        STRING Enter B:
+        ID B
+    while
+        AND
+            >
+                ID A
+                NUM 0
+            >
+                ID B
+                NUM 0
+        BLOCK
+            if
+                >
+                    ID A
+                    ID B
+                BLOCK
+                    =
+                        ID A
+                        %
+                            ID A
+                            ID B
+                BLOCK
+                    =
+                        ID B
+                        %
+                            ID B
+                            ID A
+    =
+        ID GCD
+        PLUS
+            ID A
+            ID B
+    FUNC_CALL print
+        STRING GCD(
+        ID A
+        STRING ,
+        ID B
+        STRING ) =
+        ID GCD
+0) pushs A
+1) pushs Enter A:
+2) call input 2
+3) pushs B
+4) pushs Enter B:
+5) call input 2
+6) push 0
+7) fetch B
+8) grt
+9) push 0
+10) fetch A
+11) grt
+12) and
+13) jz 29
+14) fetch B
+15) fetch A
+16) grt
+17) jnz 19
+18) jz 24
+19) fetch B
+20) fetch A
+21) mod
+22) store A
+23) jmp 28
+24) fetch A
+25) fetch B
+26) mod
+27) store B
+28) jmp 6
+29) fetch B
+30) fetch A
+31) plus
+32) store GCD
+33) pushs GCD
+34) pushs ) =
+35) pushs B
+36) pushs ,
+37) pushs A
+38) pushs GCD(
+39) call print 6

@@ -1,0 +1,7 @@
+input('Enter A:', A);
+input('Enter B:', B);
+while ((A > 0) && (B > 0))
+{
+    if (1 == 1)
+    {
+}

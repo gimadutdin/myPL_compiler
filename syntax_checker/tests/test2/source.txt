@@ -1,0 +1,11 @@
+input('Enter A:', A);
+input('Enter B:', B);
+while ((A > 0) && (B > 0))
+{
+    if (A > B)
+        A = ;
+    else
+        B = B % A;
+}
+GCD = A + B;
+print('GCD(', A, ', ', B, ') = ', GCD);

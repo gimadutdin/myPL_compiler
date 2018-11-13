@@ -1,0 +1,9 @@
+input('Enter N:', n);
+fact123 = 1;
+k = 1;
+while (k <= n)
+{
+    fact = fact*k;
+    k = k + 1;
+}
+print('N! = ', fact);

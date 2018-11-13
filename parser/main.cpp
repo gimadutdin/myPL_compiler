@@ -1,0 +1,517 @@
+/*
+    Parser for myPL
+    Author: Rustem Gimadutdinov
+*/
+
+#include <bits/stdc++.h>
+#include "generator.h"
+#include "constants.h"
+#include "parser_datastructures.h"
+using namespace std;
+
+//------------------------------------------------------------------------
+
+char s_val[50][64];
+int priority[40];
+
+void init_s_val()
+{
+    strcpy(s_val[IF], "if");
+    strcpy(s_val[ELSE], "else");
+    strcpy(s_val[WHILE], "while");
+    strcpy(s_val[LBRA], "{");
+    strcpy(s_val[RBRA], "}");
+    strcpy(s_val[LPAR], "(");
+    strcpy(s_val[RPAR], ")");
+    strcpy(s_val[PLUS], "+");
+    strcpy(s_val[MINUS], "-");
+    strcpy(s_val[MUL], "*");
+    strcpy(s_val[DIV], "/");
+    strcpy(s_val[MOD], "%");
+    strcpy(s_val[EQ], "==");
+    strcpy(s_val[NEQ], "!=");
+    strcpy(s_val[LESS], "<");
+    strcpy(s_val[GRT], ">");
+    strcpy(s_val[LEQ], "<=");
+    strcpy(s_val[GEQ], ">=");
+    strcpy(s_val[NOT], "!");
+    strcpy(s_val[AND], "&&");
+    strcpy(s_val[OR], "||");
+    strcpy(s_val[ASSIGN], "=");
+    strcpy(s_val[SEMICOLON], ";");
+    strcpy(s_val[COMMA], ",");
+    strcpy(s_val[ONE_QUOTE], "'");
+
+    strcpy(s_val[STRING], "STRING");
+    strcpy(s_val[NUM], "NUM");
+    strcpy(s_val[ID], "ID");
+    strcpy(s_val[PLUS], "PLUS");
+    strcpy(s_val[MINUS], "MINUS");
+    strcpy(s_val[MUL], "MUL");
+    strcpy(s_val[DIV], "DIV");
+    strcpy(s_val[NOT], "NOT");
+    strcpy(s_val[OR], "OR");
+    strcpy(s_val[AND], "AND");
+
+    strcpy(s_val[BLOCK], "BLOCK");
+    strcpy(s_val[FUNC_CALL], "FUNC_CALL");
+}
+
+void init_priorities()
+{
+    priority[LPAR] = 1;
+    priority[OR] = 2;
+    priority[AND] = 3;
+    priority[EQ] = 4;
+    priority[NEQ] = 4;
+    priority[LESS] = 5;
+    priority[GRT] = 5;
+    priority[LEQ] = 5;
+    priority[GEQ] = 5;
+    priority[PLUS] = 6;
+    priority[MINUS] = 6;//so lexer must recognize unar minuses itself
+    priority[MUL] = 7;
+    priority[DIV] = 7;
+    priority[MOD] = 7;
+    priority[NOT] = 8;
+
+//    priority[] = ;
+//    priority[] = ;
+//    priority[] = ;
+//    priority[] = ;
+}
+
+//------------------------------------------------------------------------
+vector<Token> tokens;
+int tok_index, token_count;
+//------------------------------------------------------------------------
+void init()
+{
+    tok_index = 0;
+}
+//------------------------------------------------------------------------
+
+bool isArLogOp(Token &t)
+{
+    return (t.type == PLUS || t.type == MINUS || t.type == MUL || t.type == DIV || t.type == MOD || t.type == NOT || t.type == OR || t.type == AND);
+}
+
+bool isCompOp(Token &t)
+{
+    return (t.type == EQ || t.type == NEQ || t.type == LESS || t.type == GRT || t.type == LEQ || t.type == GEQ);
+}
+
+//maybe and EOF type token ? (it will be the last element)
+
+ASTnode* make_ast_node(Token &t)
+{
+    ASTnode* a = new ASTnode();
+    a->type = t.type;
+    a->n_value = t.n_value;
+    strcpy(a->s_value, t.s_value);
+    return a;
+}
+
+ASTnode* parse_expr(int pos, int &end_pos, int stop_pos = -1)
+{
+    cout << tokens[pos].type << "\n";
+
+    stack<Token> stack1;
+    vector<Token> rpn;
+    Token cur_tok;
+    do
+    {
+        if (pos == stop_pos)
+        {
+            break;
+        }
+        cur_tok = tokens[pos];
+        cout << cur_tok.type << "\n";////////////
+        if (cur_tok.type == ID || cur_tok.type == NUM)
+        {
+            rpn.push_back(cur_tok);
+        }
+        else if (isArLogOp(cur_tok) || isCompOp(cur_tok))
+        {
+            if (stack1.empty() || priority[cur_tok.type] > priority[stack1.top().type])
+            {
+                stack1.push(cur_tok);
+            }
+            else
+            {
+                while (!stack1.empty() && priority[cur_tok.type] <= priority[stack1.top().type])
+                {
+                    rpn.push_back(stack1.top());
+                    stack1.pop();
+                }
+                stack1.push(cur_tok);
+            }
+        }
+        else if (cur_tok.type == LPAR)
+        {
+            stack1.push(cur_tok);
+        }
+        else if (cur_tok.type == RPAR)
+        {
+            while (!stack1.empty() && stack1.top().type != LPAR)
+            {
+                rpn.push_back(stack1.top());
+                stack1.pop();
+            }
+            if (!stack1.empty())
+                stack1.pop();
+        }
+        //cout << "pos = " << s_val[tokens[pos].type] << "]\n";
+        pos++;
+    } while (cur_tok.type == LPAR || cur_tok.type == RPAR || isArLogOp(cur_tok) || isCompOp(cur_tok) || cur_tok.type == NUM || cur_tok.type == ID);
+
+    //cout << "rpn size = " << rpn.size() << "\n";
+
+    while (!stack1.empty())
+    {
+        rpn.push_back(stack1.top());
+        stack1.pop();
+    }
+//    cout << "((";
+//    for (auto it = rpn.begin(); it != rpn.end(); it++) cout << s_val[it->type] << " ";
+//    cout << "))\n";
+    //building an ast from single ast nodes in stack2
+    stack<ASTnode*> ast;
+    Token t;
+    for (int i = 0; i < (int)rpn.size(); i++)
+    {
+        t = rpn[i];
+        if (t.type == NUM || t.type == ID)
+        {
+            ast.push(make_ast_node(t));
+        } else if (isArLogOp(t) || isCompOp(t))
+        {
+            if ((int)ast.size() <= 1)
+            {
+                if (t.type == MINUS)
+                    (*ast.top()).n_value *= -1;
+                if (t.type == NOT)
+                    (*ast.top()).n_value = !(*ast.top()).n_value;
+            } else
+            {
+                ASTnode *tmp = new ASTnode();
+                tmp->type = t.type;
+
+                ASTnode *a, *b;
+                b = ast.top();
+                ast.pop();
+                a = ast.top();
+                ast.pop();
+                tmp->push_child(a);
+                tmp->push_child(b);
+                ast.push(tmp);
+            }
+        }
+    }//end for
+    end_pos = pos - 1;//because do..while
+    return ast.top();
+}//end parse_expr
+
+
+//---------------------------------------------------------------------------------
+ASTnode* parse_block(int pos, int &endp, int only_one_statement = 0)
+{
+    ASTnode *block = new ASTnode();
+    block->type = BLOCK;
+    while (pos < tokens.size() - 1 && tokens[pos].type != RBRA)
+    {
+        if (tokens[pos].type == SEMICOLON)
+        {
+            pos++;
+        }
+        Token cur_tok = tokens[pos];
+        cout << "[[[[" << s_val[cur_tok.type] << "\n";
+        if (cur_tok.type == ID)
+        {
+            if (pos + 1 >= token_count)
+            {//pos + 1 - number of current token in numeration starting with 1
+                cout << "Error at token " << pos + 1 << " unexpected end of file.";
+                return NULL;
+            }
+            if (tokens[pos + 1].type == ASSIGN)
+            {
+                ASTnode *asgn, *l_id, *expr;
+                asgn = new ASTnode();
+                asgn->type = ASSIGN;
+                l_id = new ASTnode();
+                l_id->type = ID;
+                strcpy(l_id->s_value, cur_tok.s_value);
+                asgn->push_child(l_id);
+                int end_pos;
+                expr = parse_expr(pos + 2, end_pos);
+                if (expr != NULL)
+                {
+                    if (tokens[end_pos].type == SEMICOLON)
+                    {
+                        asgn->push_child(expr);
+                        block->push_child(asgn);
+                    } else
+                    {
+                        cout << "Error at token " << end_pos << " semicolon expected";
+                    }
+
+                } else
+                {
+                    cout << "Error at token " << pos + 2 << " after = expression expected";
+                    return NULL;
+                }
+                pos = end_pos + 1;
+            } else if (tokens[pos + 1].type == LPAR)//function call
+            {
+                ASTnode *func = new ASTnode();
+                func->type = FUNC_CALL;
+                strcpy(func->s_value, cur_tok.s_value);
+                pos += 2;
+                int i = pos;
+                while (tokens[i].type != SEMICOLON)
+                {
+                    i++;
+                }
+                int stop_pos = i - 1;
+                do
+                {//string or expr
+                    if (tokens[pos].type == COMMA)
+                    {
+                        pos++;
+                    }
+                    if (tokens[pos].type == STRING)
+                    {
+                        ASTnode *str = new ASTnode();
+                        str->type = STRING;
+                        strcpy(str->s_value, tokens[pos].s_value);
+                        func->push_child(str);
+                        pos++;
+                    } else//expr
+                    {
+                        int end_pos;
+                        ASTnode *expr = parse_expr(pos, end_pos, stop_pos);
+                        //cout << "[[[[[[[[[[[" << s_val[tokens[pos].type] << "\n";
+                        if (expr != NULL)
+                        {
+                            func->push_child(expr);
+                        } else
+                        {
+                            cout << "Unexpected token " << end_pos << "\n";
+                            return NULL;
+                        }
+                        pos = end_pos + 1;
+                        if (end_pos + 1 == stop_pos)
+                        {
+                            break;
+                        }
+                    }
+                } while (tokens[pos].type != RPAR);
+                if (tokens[pos + 1].type == SEMICOLON)
+                {
+                    block->push_child(func);
+                    pos++;
+                } else
+                {
+                    cout << "Error at token " << pos + 1 << " ; expected";
+                    return NULL;
+                }
+            }
+        } else if (cur_tok.type == IF)
+        {
+            ASTnode *if_stat, *cond;
+
+            if_stat = new ASTnode();
+            if_stat->type = IF;
+
+            int i = pos + 1, balance = 0;
+            do
+            {
+                if (tokens[i].type == LPAR)
+                {
+                    balance++;
+                } else if (tokens[i].type == RPAR)
+                {
+                    balance--;
+                }
+                i++;
+            } while (balance != 0);
+            int stop_pos = i - 1, end_pos;
+            cond = parse_expr(pos + 2, end_pos, stop_pos);
+            if_stat->push_child(cond);
+            block->push_child(if_stat);
+            pos = stop_pos + 1;//or end_pos + 2
+
+            if (tokens[pos].type == LBRA)
+            {
+                int end_pos;
+                if_stat->push_child(parse_block(pos + 1, end_pos));
+                pos = end_pos + 1;//end_pos - }
+                //cout << "[[[[[[" << s_val[tokens[end_pos].type] << "]]]]]]\n";
+            } else
+            {
+                int end_pos;
+                if_stat->push_child(parse_block(pos, end_pos, 1));
+                pos = end_pos;
+                if (tokens[pos].type == SEMICOLON)
+                {
+                    pos++;
+                }
+                //cout << "aa[[[[[[" << s_val[tokens[end_pos].type] << "]]]]]]\n";
+            }
+            if (tokens[pos].type == ELSE)
+            {
+                pos++;
+                if (tokens[pos].type == LBRA)
+                {
+                    int end_pos;
+                    if_stat->push_child(parse_block(pos + 1, end_pos));
+                    pos = end_pos + 1;//end_pos - }
+                    //cout << "[[[[[[" << s_val[tokens[end_pos].type] << "]]]]]]\n";
+                } else
+                {
+                    int end_pos;
+                    if_stat->push_child(parse_block(pos, end_pos, 1));
+                    pos = end_pos;
+                    //cout << "[[[[[[" << s_val[tokens[end_pos].type] << "]]]]]]\n";
+                }
+            }//ifELSE
+        } else if (cur_tok.type == WHILE)
+        {
+            ASTnode *while_stat, *cond;
+            while_stat = new ASTnode();
+            while_stat->type = WHILE;
+            int i = pos + 1, balance = 0;
+            do
+            {
+                if (tokens[i].type == LPAR)
+                {
+                    balance++;
+                } else if (tokens[i].type == RPAR)
+                {
+                    balance--;
+                }
+                i++;
+            } while (balance != 0);
+            int stop_pos = i - 1, end_pos;
+            cond = parse_expr(pos + 2, end_pos, stop_pos);
+            while_stat->push_child(cond);
+            block->push_child(while_stat);
+            pos = stop_pos + 1;//or end_pos + 2
+
+            if (tokens[pos].type == LBRA)
+            {
+                int end_pos;
+                while_stat->push_child(parse_block(pos + 1, end_pos));
+                pos = end_pos + 1;//end_pos - }
+            } else
+            {
+                int end_pos;
+                while_stat->push_child(parse_block(pos, end_pos, 1));
+                cout << "@@@[[[[[[" << s_val[tokens[end_pos].type] << "]]]]]]\n";
+                pos = end_pos;
+                if (tokens[pos].type == SEMICOLON)
+                {
+                    pos++;
+                }
+            }
+        }//ifWHILE
+        if (only_one_statement == 1)
+        {
+            endp = pos;
+            return block;
+        }
+    }//while
+    endp = pos;
+    return block;
+}
+
+
+
+void read_tokens(ifstream &f, vector<Token> &lt)
+{
+    int cnt;
+    f.read((char *)&cnt, sizeof(int));
+    Token t;
+    for (int i = 0; i < cnt; i++)
+    {
+        f.read((char *)&t, sizeof(Token));
+        lt.push_back(t);
+    }
+    token_count = (int)lt.size();
+}
+
+void show_tokens(/*ofstream &f, */vector<Token> &lt)
+{
+    for (auto it = lt.begin(); it != lt.end(); it++)
+    {
+        cout << (int)(it - lt.begin()) << " [" << it->type << ":" << (it->type == NUM ? to_string(it->n_value) : it->s_value) << "]" << "\n";
+    }
+}
+
+
+void show_ast(ASTnode *root, int level = 0)
+{
+    for (int i = 0; i < level; i++)
+        cout << "    ";
+    if (root->type == NUM)
+    {
+        cout << "NUM " << root->n_value << "\n";
+    } else
+    {
+        cout << s_val[root->type];
+        if (root->type == ID || root->type == FUNC_CALL || root->type == STRING)
+        {
+            cout << " " << root->s_value;
+        }
+        cout << "\n";
+    }
+    for (int i = 0; i < root->child_count; i++)
+    {
+        show_ast(root->childs[i], level + 1);
+    }
+}
+
+
+int main()
+{
+    system("lexer.exe");
+    ifstream in("tokens.bin", ios::binary);
+    init_s_val();
+    init_priorities();
+    read_tokens(in, tokens);
+    in.close();
+    show_tokens(tokens);
+
+    int end_pos;
+    ASTnode *root = parse_block(0, end_pos);
+    show_ast(root);
+
+    //low level code generation
+    init_cmd_s_val();
+    compileBlock(root);
+    Command cur_cmd;
+    for (int i = 0; i < (int)commands.size(); i++)
+    {
+        cur_cmd = commands[i];
+        cout << i << ") ";
+        cout << cmd_s_val[cur_cmd.type] << " ";
+        if (cur_cmd.type == CMD_PUSHS || cur_cmd.type == CMD_FETCH || cur_cmd.type == CMD_STORE || cur_cmd.type == CMD_CALL)
+        {
+            cout << cur_cmd.args[0].s_value << " ";
+            if (cur_cmd.type == CMD_CALL)
+            {
+                cout << cur_cmd.args[1].n_value << " ";
+            }
+        } else if (cur_cmd.type == CMD_JZ || cur_cmd.type == CMD_JNZ || cur_cmd.type == CMD_JMP || cur_cmd.type == CMD_PUSH)
+        {
+            cout << cur_cmd.args[0].n_value << " ";
+        }
+        cout << "\n";
+    }
+
+    ofstream commands_bin("commands.bin", ios::binary);
+    write_commands_to_binfile(commands_bin);
+    commands_bin.close();
+
+    return 0;
+}

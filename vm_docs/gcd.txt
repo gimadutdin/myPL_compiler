@@ -1,0 +1,96 @@
+BLOCK
+    FUNC_CALL input
+        STRING Enter A:
+        ID A
+    FUNC_CALL input
+        STRING Enter B:
+        ID B
+    while
+        AND
+            >
+                ID A
+                NUM 0
+            >
+                ID B
+                NUM 0
+        BLOCK
+            if
+                >
+                    ID A
+                    ID B
+                BLOCK
+                    =
+                        ID A
+                        %
+                            ID A
+                            ID B
+                BLOCK
+                    =
+                        ID B
+                        %
+                            ID B
+                            ID A
+    =
+        ID GCD
+        PLUS
+            ID A
+            ID B
+    FUNC_CALL print
+        STRING GCD(
+        ID A
+        STRING ,
+        ID B
+        STRING ) =
+        ID GCD
+
+
+
+//////////////////////////////////////////////// исправить:
+
+1) pushs A
+2) pushs Enter A
+3) call input
+
+4) pushs B
+5) pushs Enter B
+6) call input
+
+7) push 0
+8) fetch B
+9) grt
+10) push 0
+11) fetch A
+12) grt
+13) and
+14) jz 31
+
+15) fetch B
+16) fetch A
+17) grt
+18) jz 24
+19) fetch B
+20) fetch A
+21) mod
+22) pushs A
+23) assign
+24) jmp 29     !!!!!!!!!!
+25) fetch A
+26) fetch B
+27) mod
+28) pushs B
+29) assign
+30) jmp 7
+
+31) fetch B
+32) fetch A
+33) plus
+34) pushs GCD
+35) asisgn
+
+36) fetch GCD
+37) pushs  ) = 
+38) fetch B
+39) pushs , 
+40) fetch A
+41) pushs GCD(
+42) call print

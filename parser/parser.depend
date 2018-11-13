@@ -1,0 +1,19 @@
+# depslib dependency file v1.0
+1533503505 source:d:\desktop\mypl\parser\main.cpp
+	<bits/stdc++.h>
+	"generator.h"
+	"constants.h"
+	"parser_datastructures.h"
+
+1533503587 d:\desktop\mypl\parser\generator.h
+	"constants.h"
+	"parser_datastructures.h"
+
+1533637328 d:\desktop\mypl\parser\constants.h
+
+1533285836 d:\desktop\mypl\parser\parser_datastructures.h
+
+1533594587 source:d:\desktop\mypl\parser\generator.cpp
+	<bits/stdc++.h>
+	"generator.h"
+

@@ -1,0 +1,17 @@
+xyz = 839489;
+input('Enter A:', A);
+input('Enter B:', B);
+if (first > second)
+    first = first % second;
+else
+    second = second % first;
+while (5 < 7)
+{
+    print('Hello, world!');
+    r = 0;
+    if (1 == 1)
+    {
+        r = r + 1;
+    }
+}
+print('GCD(', A, ', ', B, ') = ', GCD)
