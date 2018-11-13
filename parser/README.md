@@ -1,0 +1,2 @@
+# myPL_parser
+A parser for very simple programming language (very minimalistic subset of C). Parser read tokens from binary file and builds AST (abstract syntax tree)). After that it runs low level code generator.
